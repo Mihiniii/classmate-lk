@@ -2,10 +2,18 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
+import StudentDashboardPage from "./pages/StudentDashboardPage";
 import ClassDetailsPage from "./pages/ClassDetailsPage";
 import AttendancePage from "./pages/AttendancePage";
 import PaymentsPage from "./pages/PaymentsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
+
+// Student ta student dashboard eka, anith ayata (teacher) class manage karana dashboard eka
+function Home() {
+  const { user } = useAuth();
+  return user.role === "STUDENT" ? <StudentDashboardPage /> : <DashboardPage />;
+}
 
 export default function App() {
   return (
@@ -13,7 +21,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/classes/:id"
           element={<ProtectedRoute role="TEACHER"><ClassDetailsPage /></ProtectedRoute>} />
         <Route path="/classes/:id/attendance"
