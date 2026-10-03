@@ -15,7 +15,10 @@ public record RegisterRequest(
 
         // BCrypt eka palamu bytes 72 witharai use karanne
         @NotBlank(message = "Password is required")
-        @Size(min = 6, max = 72, message = "Password must be 6 to 72 characters")
+        @Size(max = 72, message = "Password must be at most 72 characters")
+        @Pattern(regexp = "(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])\\S{8,}",
+                message = "Password must be at least 8 characters with an uppercase letter, a lowercase letter, "
+                        + "a number and a special character, and no spaces")
         String password,
 
         @NotNull(message = "Role is required")

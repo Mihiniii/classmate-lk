@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { errorMessage, fieldErrors } from "../api/client";
-import { hasErrors, onlyErrors, validateEmail, validateName, validatePassword } from "../utils/validation";
+import {
+  PASSWORD_RULES, hasErrors, onlyErrors, validateEmail, validateName, validatePassword,
+} from "../utils/validation";
 import AuthLayout from "../components/AuthLayout";
-import { BookIcon, UserIcon } from "../components/Icons";
+import { BookIcon, CheckIcon, UserIcon } from "../components/Icons";
 
 const ROLES = [
   { value: "STUDENT", label: "Student", hint: "Join classes", Icon: UserIcon },
@@ -104,9 +106,25 @@ export default function RegisterPage() {
         <label className="block">
           <span className="label">Password</span>
           <input type="password" name="password" autoComplete="new-password" maxLength={72}
-            placeholder="At least 6 characters" value={form.password} onChange={handleChange}
+            placeholder="Create a strong password" value={form.password} onChange={handleChange}
             aria-invalid={!!fields.password} className="input" />
           {fields.password && <span className="field-error">{fields.password}</span>}
+          <ul className="mt-2 space-y-1">
+            {PASSWORD_RULES.map((rule) => {
+              const ok = rule.test(form.password);
+              return (
+                <li key={rule.label}
+                  className={`flex items-center gap-2 text-xs ${ok ? "text-emerald-700" : "text-slate-500"}`}>
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                    ok ? "bg-emerald-100" : "bg-slate-100"
+                  }`}>
+                    {ok && <CheckIcon className="h-3 w-3" />}
+                  </span>
+                  {rule.label}
+                </li>
+              );
+            })}
+          </ul>
         </label>
 
         <label className="block">

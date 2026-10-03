@@ -27,10 +27,21 @@ export function validateName(value) {
   return "";
 }
 
+// Aluth password ekakata one rules (register page eke checklist eka mekenma hadanne).
+// Backend eke RegisterRequest eke @Pattern ekath ekka galapenna one.
+export const PASSWORD_RULES = [
+  { label: "At least 8 characters", test: (v) => v.length >= 8 },
+  { label: "An uppercase letter (A-Z)", test: (v) => /[A-Z]/.test(v) },
+  { label: "A lowercase letter (a-z)", test: (v) => /[a-z]/.test(v) },
+  { label: "A number (0-9)", test: (v) => /\d/.test(v) },
+  { label: "A special character (!@#$...)", test: (v) => /[^A-Za-z0-9\s]/.test(v) },
+];
+
 export function validatePassword(value) {
   if (!value) return "Password is required";
-  if (value.length < 6) return "Password must be at least 6 characters";
   if (value.length > 72) return "Password must be at most 72 characters";
+  if (/\s/.test(value)) return "Password cannot contain spaces";
+  if (!PASSWORD_RULES.every((rule) => rule.test(value))) return "Password does not meet all the rules below";
   return "";
 }
 
