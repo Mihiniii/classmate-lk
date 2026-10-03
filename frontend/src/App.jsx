@@ -4,6 +4,7 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import ClassDetailsPage from "./pages/ClassDetailsPage";
 import AttendancePage from "./pages/AttendancePage";
+import PaymentsPage from "./pages/PaymentsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
           element={<ProtectedRoute role="TEACHER"><ClassDetailsPage /></ProtectedRoute>} />
         <Route path="/classes/:id/attendance"
           element={<ProtectedRoute role="TEACHER"><AttendancePage /></ProtectedRoute>} />
+        <Route path="/classes/:id/payments"
+          element={<ProtectedRoute role="TEACHER"><PaymentsPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

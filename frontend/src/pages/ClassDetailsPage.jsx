@@ -96,6 +96,10 @@ export default function ClassDetailsPage() {
                   className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
                   Attendance
                 </Link>
+                <Link to={`/classes/${id}/payments`}
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+                  Payments
+                </Link>
               </div>
             </section>
 
