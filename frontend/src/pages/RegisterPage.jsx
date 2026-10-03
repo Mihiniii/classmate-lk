@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { errorMessage, fieldErrors } from "../api/client";
+import { hasErrors, onlyErrors, validateEmail, validateName, validatePassword } from "../utils/validation";
 import AuthLayout from "../components/AuthLayout";
 import { BookIcon, UserIcon } from "../components/Icons";
 
@@ -10,25 +11,41 @@ const ROLES = [
   { value: "TEACHER", label: "Teacher", hint: "Run classes", Icon: BookIcon },
 ];
 
+function validate(form) {
+  return onlyErrors({
+    name: validateName(form.name),
+    email: validateEmail(form.email),
+    password: validatePassword(form.password),
+    confirmPassword: !form.confirmPassword
+      ? "Please confirm your password"
+      : form.confirmPassword !== form.password ? "Passwords do not match" : "",
+    role: ROLES.some((r) => r.value === form.role) ? "" : "Choose Student or Teacher",
+  });
+}
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "STUDENT" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "STUDENT" });
   const [error, setError] = useState("");
   const [fields, setFields] = useState({});
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setFields({ ...fields, [e.target.name]: "" });   // type karaddi e field eke error eka ain karanawa
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    setFields({});
+    const errors = validate(form);
+    setFields(errors);
+    if (hasErrors(errors)) return;
+
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password, form.role);
+      await register(form.name.trim(), form.email.trim(), form.password, form.role);
       navigate("/");
     } catch (err) {
       setError(errorMessage(err));
@@ -40,7 +57,7 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout title="Create your account" subtitle="It takes less than a minute">
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {error && <p className="alert-error">{error}</p>}
 
         <fieldset>
@@ -72,23 +89,32 @@ export default function RegisterPage() {
 
         <label className="block">
           <span className="label">Name</span>
-          <input type="text" name="name" required placeholder="Your full name" value={form.name}
-            onChange={handleChange} className="input" />
+          <input type="text" name="name" autoComplete="name" maxLength={100} placeholder="Your full name"
+            value={form.name} onChange={handleChange} aria-invalid={!!fields.name} className="input" />
           {fields.name && <span className="field-error">{fields.name}</span>}
         </label>
 
         <label className="block">
           <span className="label">Email</span>
-          <input type="email" name="email" required placeholder="you@example.com" value={form.email}
-            onChange={handleChange} className="input" />
+          <input type="email" name="email" autoComplete="email" maxLength={255} placeholder="you@example.com"
+            value={form.email} onChange={handleChange} aria-invalid={!!fields.email} className="input" />
           {fields.email && <span className="field-error">{fields.email}</span>}
         </label>
 
         <label className="block">
           <span className="label">Password</span>
-          <input type="password" name="password" required minLength={6} placeholder="At least 6 characters"
-            value={form.password} onChange={handleChange} className="input" />
+          <input type="password" name="password" autoComplete="new-password" maxLength={72}
+            placeholder="At least 6 characters" value={form.password} onChange={handleChange}
+            aria-invalid={!!fields.password} className="input" />
           {fields.password && <span className="field-error">{fields.password}</span>}
+        </label>
+
+        <label className="block">
+          <span className="label">Confirm password</span>
+          <input type="password" name="confirmPassword" autoComplete="new-password" maxLength={72}
+            placeholder="Type your password again" value={form.confirmPassword} onChange={handleChange}
+            aria-invalid={!!fields.confirmPassword} className="input" />
+          {fields.confirmPassword && <span className="field-error">{fields.confirmPassword}</span>}
         </label>
 
         <button type="submit" disabled={loading} className="btn btn-primary w-full py-2.5">

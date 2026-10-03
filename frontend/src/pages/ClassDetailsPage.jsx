@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import api, { errorMessage, fieldErrors } from "../api/client";
-import { formatDay, formatLKR, formatTimeRange, initials } from "../utils/format";
+import { validateEmail } from "../utils/validation";
+import { formatDay,formatLKR, formatTimeRange, initials } from "../utils/format";
 import AppLayout, { EmptyState } from "../components/AppLayout";
 import {
   CalendarIcon, ClipboardCheckIcon, ClockIcon, PlusIcon, UsersIcon, WalletIcon,
@@ -32,7 +33,11 @@ export default function ClassDetailsPage() {
 
   async function handleAdd(e) {
     e.preventDefault();
-    setAddError("");
+    const invalid = validateEmail(email, "Student email")
+      || (students.some((s) => s.studentEmail.toLowerCase() === email.trim().toLowerCase())
+        ? "Student is already in this class" : "");
+    setAddError(invalid);
+    if (invalid) return;
     setAdding(true);
     try {
       const { data } = await api.post(`/api/classes/${id}/students`, { studentEmail: email.trim() });
@@ -114,11 +119,12 @@ export default function ClassDetailsPage() {
             </div>
 
             <div className="border-b border-slate-200 bg-slate-50/60 px-6 py-4">
-              <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <form onSubmit={handleAdd} noValidate className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <label className="block flex-1">
                   <span className="label">Add a student by email</span>
-                  <input type="email" required placeholder="student@example.com" value={email}
-                    onChange={(e) => setEmail(e.target.value)} className="input" />
+                  <input type="email" maxLength={255} placeholder="student@example.com" value={email}
+                    onChange={(e) => { setEmail(e.target.value); setAddError(""); }}
+                    aria-invalid={!!addError} className="input" />
                 </label>
                 <button type="submit" disabled={adding} className="btn btn-primary">
                   <PlusIcon />

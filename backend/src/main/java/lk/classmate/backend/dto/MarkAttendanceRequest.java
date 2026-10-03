@@ -9,8 +9,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record MarkAttendanceRequest(
-        @NotNull LocalDate date,
-        @NotEmpty List<@Valid StudentStatus> records
+        @NotNull(message = "Date is required")
+        LocalDate date,
+
+        @NotEmpty(message = "Mark at least one student")
+        List<@Valid StudentStatus> records
 ) {
-    public record StudentStatus(@NotNull Long studentId, @NotNull AttendanceStatus status) {}
+    public record StudentStatus(
+            @NotNull(message = "Student is required") Long studentId,
+            @NotNull(message = "Status is required") AttendanceStatus status
+    ) {}
 }

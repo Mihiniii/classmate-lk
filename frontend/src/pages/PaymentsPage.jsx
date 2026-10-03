@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import api, { errorMessage, fieldErrors } from "../api/client";
 import { formatLKR, initials } from "../utils/format";
+import { validateAmount } from "../utils/validation";
 import AppLayout, { EmptyState, StatCard } from "../components/AppLayout";
 import { CheckIcon, UsersIcon, WalletIcon } from "../components/Icons";
 
@@ -176,7 +177,10 @@ function RecordPaymentForm({ classId, studentId, month, defaultAmount, onRecorde
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    const invalid = validateAmount(amount, "Amount")
+      || (note.trim().length > 200 ? "Note must be at most 200 characters" : "");
+    setError(invalid);
+    if (invalid) return;
     setSaving(true);
     try {
       await api.post(`/api/classes/${classId}/payments`, {
@@ -195,14 +199,15 @@ function RecordPaymentForm({ classId, studentId, month, defaultAmount, onRecorde
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <form onSubmit={handleSubmit} noValidate
+      className="mt-4 space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
       {error && <p className="alert-error">{error}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="label">Amount (LKR)</span>
-          <input type="number" required min="0" step="1" autoFocus value={amount}
-            onChange={(e) => setAmount(e.target.value)} className="input" />
+          <input type="text" inputMode="numeric" autoFocus value={amount}
+            onChange={(e) => { setAmount(e.target.value); setError(""); }} className="input" />
         </label>
         <label className="block">
           <span className="label">Method</span>
