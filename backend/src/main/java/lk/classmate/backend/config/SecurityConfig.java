@@ -1,5 +1,5 @@
 package lk.classmate.backend.config;
-
+import org.springframework.http.HttpMethod;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -70,6 +70,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/error").permitAll()
                         .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/api/classes/my").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/classes/**").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.PUT, "/api/classes/**").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/classes/**").hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth
