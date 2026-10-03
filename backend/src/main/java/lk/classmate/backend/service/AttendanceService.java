@@ -4,8 +4,6 @@ import lk.classmate.backend.dto.*;
 import lk.classmate.backend.entity.*;
 import lk.classmate.backend.repository.AttendanceRepository;
 import lk.classmate.backend.repository.EnrollmentRepository;
-import lk.classmate.backend.repository.TuitionClassRepository;
-import lk.classmate.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,28 +19,23 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final TuitionClassRepository classRepository;
-    private final UserRepository userRepository;
+    private final ClassAccessService classAccess;
 
     public AttendanceService(AttendanceRepository attendanceRepository,
                              EnrollmentRepository enrollmentRepository,
-                             TuitionClassRepository classRepository,
-                             UserRepository userRepository) {
+                             ClassAccessService classAccess) {
         this.attendanceRepository = attendanceRepository;
         this.enrollmentRepository = enrollmentRepository;
-        this.classRepository = classRepository;
-        this.userRepository = userRepository;
+        this.classAccess = classAccess;
     }
 
-    // Teacher: attendance mark karanna (ekama dawasata aye yawwoth update wenawa)
     @Transactional
     public ClassAttendanceResponse mark(Long classId, MarkAttendanceRequest req, String teacherEmail) {
-        TuitionClass c = findOwnedClass(classId, teacherEmail);
+        TuitionClass c = classAccess.findOwnedClass(classId, teacherEmail);
         if (req.date().isAfter(LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot mark attendance for a future date");
         }
 
-        // Me class eke students: studentId -> enrollment
         Map<Long, Enrollment> byStudent = enrollmentRepository.findByTuitionClassId(classId).stream()
                 .collect(Collectors.toMap(e -> e.getStudent().getId(), e -> e));
 
@@ -65,27 +58,22 @@ public class AttendanceService {
         return buildClassView(c, req.date());
     }
 
-    // Teacher: ema dawase register eka
     public ClassAttendanceResponse getForDate(Long classId, LocalDate date, String teacherEmail) {
-        TuitionClass c = findOwnedClass(classId, teacherEmail);
+        TuitionClass c = classAccess.findOwnedClass(classId, teacherEmail);
         return buildClassView(c, date);
     }
 
-    // Student: mage attendance history eka
     public List<MyAttendanceResponse> getMine(String studentEmail) {
-        User student = userRepository.findByEmail(studentEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        User student = classAccess.findUser(studentEmail);
         return attendanceRepository.findByEnrollmentStudentIdOrderByDateDesc(student.getId())
                 .stream().map(MyAttendanceResponse::from).toList();
     }
 
-    // ---- helpers ----
     private ClassAttendanceResponse buildClassView(TuitionClass c, LocalDate date) {
         Map<Long, AttendanceStatus> statusByEnrollment =
                 attendanceRepository.findByEnrollmentTuitionClassIdAndDate(c.getId(), date).stream()
                         .collect(Collectors.toMap(a -> a.getEnrollment().getId(), Attendance::getStatus));
 
-        // Class eke hama student ma pennanawa; mark karala nathnam status = null
         List<AttendanceRow> rows = enrollmentRepository.findByTuitionClassIdOrderByStudentNameAsc(c.getId())
                 .stream()
                 .map(e -> new AttendanceRow(e.getStudent().getId(), e.getStudent().getName(),
@@ -104,14 +92,5 @@ public class AttendanceService {
 
     private int count(List<AttendanceRow> rows, AttendanceStatus status) {
         return (int) rows.stream().filter(r -> r.status() == status).count();
-    }
-
-    private TuitionClass findOwnedClass(Long classId, String teacherEmail) {
-        TuitionClass c = classRepository.findById(classId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
-        if (!c.getTeacher().getEmail().equals(teacherEmail)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This is not your class");
-        }
-        return c;
     }
 }

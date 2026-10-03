@@ -4,8 +4,6 @@ import lk.classmate.backend.dto.*;
 import lk.classmate.backend.entity.*;
 import lk.classmate.backend.repository.EnrollmentRepository;
 import lk.classmate.backend.repository.PaymentRepository;
-import lk.classmate.backend.repository.TuitionClassRepository;
-import lk.classmate.backend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,22 +20,18 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final TuitionClassRepository classRepository;
-    private final UserRepository userRepository;
+    private final ClassAccessService classAccess;
 
     public PaymentService(PaymentRepository paymentRepository,
                           EnrollmentRepository enrollmentRepository,
-                          TuitionClassRepository classRepository,
-                          UserRepository userRepository) {
+                          ClassAccessService classAccess) {
         this.paymentRepository = paymentRepository;
         this.enrollmentRepository = enrollmentRepository;
-        this.classRepository = classRepository;
-        this.userRepository = userRepository;
+        this.classAccess = classAccess;
     }
 
-    // Teacher: payment ekak record karanna
     public PaymentResponse record(Long classId, RecordPaymentRequest req, String teacherEmail) {
-        TuitionClass c = findOwnedClass(classId, teacherEmail);
+        TuitionClass c = classAccess.findOwnedClass(classId, teacherEmail);
 
         Enrollment e = enrollmentRepository.findByStudentIdAndTuitionClassId(req.studentId(), classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student is not in this class"));
@@ -55,9 +49,8 @@ public class PaymentService {
         return PaymentResponse.from(paymentRepository.save(p));
     }
 
-    // Teacher: ema masaye paid / unpaid list eka
     public ClassPaymentSummary summary(Long classId, String month, String teacherEmail) {
-        TuitionClass c = findOwnedClass(classId, teacherEmail);
+        TuitionClass c = classAccess.findOwnedClass(classId, teacherEmail);
         if (month == null || !month.matches(MONTH_PATTERN)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Month must look like 2026-10");
         }
@@ -88,28 +81,16 @@ public class PaymentService {
         );
     }
 
-    // Teacher: waradi payment ekak delete karanna
     public void delete(Long classId, Long paymentId, String teacherEmail) {
-        findOwnedClass(classId, teacherEmail);
+        classAccess.findOwnedClass(classId, teacherEmail);
         Payment p = paymentRepository.findByIdAndEnrollmentTuitionClassId(paymentId, classId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found"));
         paymentRepository.delete(p);
     }
 
-    // Student: mage payments
     public List<PaymentResponse> getMine(String studentEmail) {
-        User student = userRepository.findByEmail(studentEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        User student = classAccess.findUser(studentEmail);
         return paymentRepository.findByEnrollmentStudentIdOrderByMonthDesc(student.getId())
                 .stream().map(PaymentResponse::from).toList();
-    }
-
-    private TuitionClass findOwnedClass(Long classId, String teacherEmail) {
-        TuitionClass c = classRepository.findById(classId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Class not found"));
-        if (!c.getTeacher().getEmail().equals(teacherEmail)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This is not your class");
-        }
-        return c;
     }
 }
