@@ -31,4 +31,9 @@ export function errorMessage(err) {
   return err.response?.data?.message ?? "Cannot reach the server. Is the backend running?";
 }
 
+// Validation errors (field eka anuwa) ganna
+export function fieldErrors(err) {
+  return err.response?.data?.fieldErrors ?? {};
+}
+
 export default api;

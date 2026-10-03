@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { errorMessage } from "../api/client";
 
@@ -51,6 +51,11 @@ export default function LoginPage() {
           className="w-full rounded-lg bg-purple-600 py-2 font-semibold text-white hover:bg-purple-700 disabled:opacity-60">
           {loading ? "Logging in..." : "Log in"}
         </button>
+
+        <p className="text-sm text-center text-gray-600">
+          New here?{" "}
+          <Link to="/register" className="font-medium text-purple-700 hover:underline">Register</Link>
+        </p>
       </form>
     </div>
   );

@@ -17,6 +17,11 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function register(name, email, password, role) {
+    await api.post("/api/auth/register", { name, email, password, role });
+    return login(email, password);   // register unama auto login
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -24,7 +29,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
