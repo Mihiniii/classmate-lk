@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/classes/**").hasRole("TEACHER")
                         .requestMatchers(HttpMethod.PUT, "/api/classes/**").hasRole("TEACHER")
                         .requestMatchers(HttpMethod.DELETE, "/api/classes/**").hasRole("TEACHER")
+                        .requestMatchers("/api/students/**").hasRole("STUDENT")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

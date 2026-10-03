@@ -1,5 +1,7 @@
 package lk.classmate.backend.service;
 
+import lk.classmate.backend.repository.EnrollmentRepository;
+import org.springframework.transaction.annotation.Transactional;
 import lk.classmate.backend.dto.ClassRequest;
 import lk.classmate.backend.dto.ClassResponse;
 import lk.classmate.backend.entity.TuitionClass;
@@ -18,10 +20,13 @@ public class TuitionClassService {
 
     private final TuitionClassRepository classRepository;
     private final UserRepository userRepository;
-
-    public TuitionClassService(TuitionClassRepository classRepository, UserRepository userRepository) {
+    private final EnrollmentRepository enrollmentRepository;
+    public TuitionClassService(TuitionClassRepository classRepository,
+                               UserRepository userRepository,
+                               EnrollmentRepository enrollmentRepository) {
         this.classRepository = classRepository;
         this.userRepository = userRepository;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     // CREATE
@@ -61,9 +66,11 @@ public class TuitionClassService {
     }
 
     // DELETE
+    @Transactional
     public void delete(Long id, String teacherEmail) {
         TuitionClass c = findClass(id);
         checkOwner(c, teacherEmail);
+        enrollmentRepository.deleteAll(enrollmentRepository.findByTuitionClassId(id));
         classRepository.delete(c);
     }
 
