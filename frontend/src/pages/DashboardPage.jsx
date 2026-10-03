@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import api, { errorMessage } from "../api/client";
 import ClassForm from "../components/ClassForm";
@@ -76,13 +77,9 @@ export default function DashboardPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           {classes.map((c) => (
-            <div key={c.id} className="bg-white rounded-xl shadow-sm p-5">
-              <h3 className="font-semibold text-gray-900">{c.subject}</h3>
-              <p className="text-sm text-gray-500">{c.grade}</p>
-              <p className="mt-2 text-sm text-gray-700">
-                {c.dayOfWeek} · {c.startTime.slice(0, 5)}–{c.endTime.slice(0, 5)}
-              </p>
-              <p className="text-sm text-purple-700 font-medium">LKR {c.monthlyFee.toLocaleString()}</p>
+            <div key={c.id}
+              className={`bg-white rounded-xl shadow-sm p-5 ${isTeacher ? "hover:shadow-md transition-shadow" : ""}`}>
+              <ClassInfo c={c} linked={isTeacher} />
 
               {isTeacher && (
                 <div className="mt-4 flex gap-4 border-t border-gray-100 pt-3">
@@ -107,4 +104,19 @@ export default function DashboardPage() {
       )}
     </div>
   );
+}
+
+// Teacher ta card eka click karala class details page ekata yanna puluwan
+function ClassInfo({ c, linked }) {
+  const info = (
+    <>
+      <h3 className="font-semibold text-gray-900">{c.subject}</h3>
+      <p className="text-sm text-gray-500">{c.grade}</p>
+      <p className="mt-2 text-sm text-gray-700">
+        {c.dayOfWeek} · {c.startTime.slice(0, 5)}–{c.endTime.slice(0, 5)}
+      </p>
+      <p className="text-sm text-purple-700 font-medium">LKR {c.monthlyFee.toLocaleString()}</p>
+    </>
+  );
+  return linked ? <Link to={`/classes/${c.id}`} className="block">{info}</Link> : info;
 }
