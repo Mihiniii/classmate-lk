@@ -13,10 +13,11 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    private final JwtService jwtService;
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public UserResponse register(RegisterRequest req) {
@@ -32,12 +33,12 @@ public class AuthService {
         return UserResponse.from(userRepository.save(user));
     }
 
-    public UserResponse login(LoginRequest req) {
+    public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.email().trim().toLowerCase())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
-        return UserResponse.from(user);
+        return new AuthResponse(jwtService.generateToken(user), UserResponse.from(user));
     }
 }
