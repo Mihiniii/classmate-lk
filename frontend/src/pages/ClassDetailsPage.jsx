@@ -91,6 +91,12 @@ export default function ClassDetailsPage() {
               <p className="text-sm text-purple-700 font-medium">
                 LKR {tuitionClass.monthlyFee.toLocaleString()} / month
               </p>
+              <div className="mt-4 flex gap-3">
+                <Link to={`/classes/${id}/attendance`}
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+                  Attendance
+                </Link>
+              </div>
             </section>
 
             <section className="bg-white rounded-xl shadow-sm p-5">
