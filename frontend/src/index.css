@@ -1,1 +1,86 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+/* Hama page ekakama use karana podu styles (buttons, inputs, cards, badges) */
+@layer components {
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-violet-600 text-white shadow-sm hover:bg-violet-700 active:bg-violet-800;
+  }
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50;
+  }
+  .btn-ghost {
+    @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+  .btn-danger {
+    @apply text-red-600 hover:bg-red-50;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .label {
+    @apply text-sm font-medium text-slate-700;
+  }
+  .input {
+    @apply mt-1.5 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm transition
+      placeholder:text-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30;
+  }
+  .field-error {
+    @apply mt-1 block text-xs text-red-600;
+  }
+
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset;
+  }
+  .badge-green {
+    @apply bg-emerald-50 text-emerald-700 ring-emerald-600/20;
+  }
+  .badge-red {
+    @apply bg-red-50 text-red-700 ring-red-600/20;
+  }
+  .badge-amber {
+    @apply bg-amber-50 text-amber-700 ring-amber-600/20;
+  }
+  .badge-violet {
+    @apply bg-violet-50 text-violet-700 ring-violet-600/20;
+  }
+
+  .alert-error {
+    @apply rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+  }
+  .alert-success {
+    @apply rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700;
+  }
+
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+  .data-table th {
+    @apply border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .data-table td {
+    @apply border-b border-slate-100 px-4 py-3 text-slate-700;
+  }
+  .data-table tr:last-child td {
+    @apply border-b-0;
+  }
+}

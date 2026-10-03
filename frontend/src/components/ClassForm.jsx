@@ -1,10 +1,8 @@
 import { useState } from "react";
 import api, { errorMessage, fieldErrors } from "../api/client";
+import { formatDay } from "../utils/format";
 
 const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
-
-const inputClass =
-  "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500";
 
 // existing dunnoth edit (PUT), nathnam aluth class ekak (POST)
 export default function ClassForm({ existing, onSaved, onCancel }) {
@@ -47,65 +45,74 @@ export default function ClassForm({ existing, onSaved, onCancel }) {
   }
 
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 px-4 py-8 overflow-y-auto">
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white rounded-2xl shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">{existing ? "Edit class" : "New class"}</h2>
+    <div className="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-slate-900/50 px-4 py-10 backdrop-blur-sm sm:items-center">
+      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-bold tracking-tight text-slate-900">
+            {existing ? "Edit class" : "New class"}
+          </h2>
+          <p className="text-sm text-slate-500">
+            {existing ? "Update the schedule or fee for this class." : "Set up the schedule and monthly fee."}
+          </p>
+        </div>
 
-        {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{error}</p>}
+        <div className="space-y-4 px-6 py-5">
+          {error && <p className="alert-error">{error}</p>}
 
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">Subject</span>
-          <input type="text" name="subject" required autoFocus placeholder="Combined Maths"
-            value={form.subject} onChange={handleChange} className={inputClass} />
-          {fields.subject && <span className="text-xs text-red-600">{fields.subject}</span>}
-        </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="label">Subject</span>
+              <input type="text" name="subject" required autoFocus placeholder="Combined Maths"
+                value={form.subject} onChange={handleChange} className="input" />
+              {fields.subject && <span className="field-error">{fields.subject}</span>}
+            </label>
 
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">Grade</span>
-          <input type="text" name="grade" required placeholder="Grade 12"
-            value={form.grade} onChange={handleChange} className={inputClass} />
-          {fields.grade && <span className="text-xs text-red-600">{fields.grade}</span>}
-        </label>
+            <label className="block">
+              <span className="label">Grade</span>
+              <input type="text" name="grade" required placeholder="Grade 12"
+                value={form.grade} onChange={handleChange} className="input" />
+              {fields.grade && <span className="field-error">{fields.grade}</span>}
+            </label>
+          </div>
 
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">Day</span>
-          <select name="dayOfWeek" value={form.dayOfWeek} onChange={handleChange} className={inputClass}>
-            {DAYS.map((d) => (
-              <option key={d} value={d}>{d[0] + d.slice(1).toLowerCase()}</option>
-            ))}
-          </select>
-          {fields.dayOfWeek && <span className="text-xs text-red-600">{fields.dayOfWeek}</span>}
-        </label>
-
-        <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Start time</span>
-            <input type="time" name="startTime" required value={form.startTime}
-              onChange={handleChange} className={inputClass} />
-            {fields.startTime && <span className="text-xs text-red-600">{fields.startTime}</span>}
+            <span className="label">Day</span>
+            <select name="dayOfWeek" value={form.dayOfWeek} onChange={handleChange} className="input">
+              {DAYS.map((d) => (
+                <option key={d} value={d}>{formatDay(d)}</option>
+              ))}
+            </select>
+            {fields.dayOfWeek && <span className="field-error">{fields.dayOfWeek}</span>}
           </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="label">Start time</span>
+              <input type="time" name="startTime" required value={form.startTime}
+                onChange={handleChange} className="input" />
+              {fields.startTime && <span className="field-error">{fields.startTime}</span>}
+            </label>
+            <label className="block">
+              <span className="label">End time</span>
+              <input type="time" name="endTime" required value={form.endTime}
+                onChange={handleChange} className="input" />
+              {fields.endTime && <span className="field-error">{fields.endTime}</span>}
+            </label>
+          </div>
+
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">End time</span>
-            <input type="time" name="endTime" required value={form.endTime}
-              onChange={handleChange} className={inputClass} />
-            {fields.endTime && <span className="text-xs text-red-600">{fields.endTime}</span>}
+            <span className="label">Monthly fee (LKR)</span>
+            <input type="number" name="monthlyFee" required min="0" step="1" placeholder="2500"
+              value={form.monthlyFee} onChange={handleChange} className="input" />
+            {fields.monthlyFee && <span className="field-error">{fields.monthlyFee}</span>}
           </label>
         </div>
 
-        <label className="block">
-          <span className="text-sm font-medium text-gray-700">Monthly fee (LKR)</span>
-          <input type="number" name="monthlyFee" required min="0" step="1" placeholder="2500"
-            value={form.monthlyFee} onChange={handleChange} className={inputClass} />
-          {fields.monthlyFee && <span className="text-xs text-red-600">{fields.monthlyFee}</span>}
-        </label>
-
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onCancel} disabled={saving}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">
+        <div className="flex justify-end gap-3 rounded-b-2xl border-t border-slate-200 bg-slate-50 px-6 py-4">
+          <button type="button" onClick={onCancel} disabled={saving} className="btn btn-secondary">
             Cancel
           </button>
-          <button type="submit" disabled={saving}
-            className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60">
+          <button type="submit" disabled={saving} className="btn btn-primary">
             {saving ? "Saving..." : existing ? "Save changes" : "Create class"}
           </button>
         </div>

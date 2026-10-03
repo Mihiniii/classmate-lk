@@ -2,12 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import api, { errorMessage } from "../api/client";
+import { formatDay, formatLKR, formatTimeRange } from "../utils/format";
+import AppLayout, { EmptyState } from "../components/AppLayout";
 import ClassForm from "../components/ClassForm";
+import {
+  BookIcon, CalendarIcon, ChevronRightIcon, ClockIcon, PencilIcon, PlusIcon, TrashIcon, WalletIcon,
+} from "../components/Icons";
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isTeacher = user.role === "TEACHER";
   const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   // null = form eka close, {} = aluth class, class object = edit
   const [editing, setEditing] = useState(null);
@@ -17,7 +23,8 @@ export default function DashboardPage() {
     const url = user.role === "TEACHER" ? "/api/classes/my" : "/api/students/me/classes";
     api.get(url)
       .then((res) => setClasses(res.data))
-      .catch((err) => setError(errorMessage(err)));
+      .catch((err) => setError(errorMessage(err)))
+      .finally(() => setLoading(false));
   }, [user.role]);
 
   function handleSaved(saved) {
@@ -46,63 +53,55 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-purple-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-4 py-4">
-          <h1 className="text-xl font-bold text-purple-700">ClassMate LK</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.name} · {user.role}</span>
-            <button onClick={logout} className="text-sm font-medium text-purple-700 hover:underline">
-              Log out
-            </button>
+    <AppLayout
+      title={isTeacher ? "My classes" : "Classes I'm in"}
+      subtitle={isTeacher ? "Create classes and manage students, attendance and fees." : undefined}
+      actions={isTeacher && (
+        <button onClick={() => setEditing({})} className="btn btn-primary">
+          <PlusIcon />
+          New class
+        </button>
+      )}>
+      {error && <p className="alert-error">{error}</p>}
+      {loading && <p className="text-sm text-slate-500">Loading...</p>}
+
+      {!loading && !error && classes.length === 0 && (
+        <div className="card">
+          <EmptyState icon={<BookIcon className="h-6 w-6" />} title="No classes yet"
+            hint={isTeacher ? "Create your first class with the “New class” button." : undefined} />
+        </div>
+      )}
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {classes.map((c) => (
+          <div key={c.id}
+            className={`card flex flex-col overflow-hidden ${
+              isTeacher ? "transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md" : ""
+            }`}>
+            <ClassInfo c={c} linked={isTeacher} />
+
+            {isTeacher && (
+              <div className="flex items-center gap-1 border-t border-slate-100 bg-slate-50/60 px-3 py-2">
+                <button onClick={() => setEditing(c)} className="btn btn-ghost btn-sm">
+                  <PencilIcon className="h-3.5 w-3.5" />
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(c)} disabled={deletingId === c.id}
+                  className="btn btn-danger btn-sm">
+                  <TrashIcon className="h-3.5 w-3.5" />
+                  {deletingId === c.id ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {isTeacher ? "My classes" : "Classes I'm in"}
-          </h2>
-          {isTeacher && (
-            <button onClick={() => setEditing({})}
-              className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
-              + New class
-            </button>
-          )}
-        </div>
-
-        {error && <p className="mb-4 text-red-600">{error}</p>}
-        {!error && classes.length === 0 && <p className="text-gray-500">No classes yet.</p>}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {classes.map((c) => (
-            <div key={c.id}
-              className={`bg-white rounded-xl shadow-sm p-5 ${isTeacher ? "hover:shadow-md transition-shadow" : ""}`}>
-              <ClassInfo c={c} linked={isTeacher} />
-
-              {isTeacher && (
-                <div className="mt-4 flex gap-4 border-t border-gray-100 pt-3">
-                  <button onClick={() => setEditing(c)}
-                    className="text-sm font-medium text-purple-700 hover:underline">
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(c)} disabled={deletingId === c.id}
-                    className="text-sm font-medium text-red-600 hover:underline disabled:opacity-60">
-                    {deletingId === c.id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
+        ))}
+      </div>
 
       {editing && (
         <ClassForm key={editing.id ?? "new"} existing={editing.id ? editing : null}
           onSaved={handleSaved} onCancel={() => setEditing(null)} />
       )}
-    </div>
+    </AppLayout>
   );
 }
 
@@ -110,13 +109,32 @@ export default function DashboardPage() {
 function ClassInfo({ c, linked }) {
   const info = (
     <>
-      <h3 className="font-semibold text-gray-900">{c.subject}</h3>
-      <p className="text-sm text-gray-500">{c.grade}</p>
-      <p className="mt-2 text-sm text-gray-700">
-        {c.dayOfWeek} · {c.startTime.slice(0, 5)}–{c.endTime.slice(0, 5)}
-      </p>
-      <p className="text-sm text-purple-700 font-medium">LKR {c.monthlyFee.toLocaleString()}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="truncate text-base font-bold text-slate-900">{c.subject}</h3>
+          <span className="badge badge-violet mt-1.5">{c.grade}</span>
+        </div>
+        {linked && <ChevronRightIcon className="mt-1 h-5 w-5 shrink-0 text-slate-300" />}
+      </div>
+
+      <dl className="mt-4 space-y-2 text-sm text-slate-600">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="h-4 w-4 text-slate-400" />
+          {formatDay(c.dayOfWeek)}
+        </div>
+        <div className="flex items-center gap-2">
+          <ClockIcon className="h-4 w-4 text-slate-400" />
+          {formatTimeRange(c)}
+        </div>
+        <div className="flex items-center gap-2 font-semibold text-slate-900">
+          <WalletIcon className="h-4 w-4 text-slate-400" />
+          {formatLKR(c.monthlyFee)}
+          <span className="font-normal text-slate-500">/ month</span>
+        </div>
+      </dl>
     </>
   );
-  return linked ? <Link to={`/classes/${c.id}`} className="block">{info}</Link> : info;
+  return linked
+    ? <Link to={`/classes/${c.id}`} className="block flex-1 p-5">{info}</Link>
+    : <div className="flex-1 p-5">{info}</div>;
 }

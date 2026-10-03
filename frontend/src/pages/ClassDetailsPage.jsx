@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { useAuth } from "../context/AuthContext";
 import api, { errorMessage, fieldErrors } from "../api/client";
+import { formatDay, formatLKR, formatTimeRange, initials } from "../utils/format";
+import AppLayout, { EmptyState } from "../components/AppLayout";
+import {
+  CalendarIcon, ClipboardCheckIcon, ClockIcon, PlusIcon, UsersIcon, WalletIcon,
+} from "../components/Icons";
 
 export default function ClassDetailsPage() {
   const { id } = useParams();
-  const { user, logout } = useAuth();
   const [tuitionClass, setTuitionClass] = useState(null);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,92 +62,103 @@ export default function ClassDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-purple-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between px-4 py-4">
-          <h1 className="text-xl font-bold text-purple-700">ClassMate LK</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.name} · {user.role}</span>
-            <button onClick={logout} className="text-sm font-medium text-purple-700 hover:underline">
-              Log out
-            </button>
-          </div>
-        </div>
-      </header>
+    <AppLayout backTo="/" backLabel="Back to my classes">
+      {loading && <p className="text-sm text-slate-500">Loading...</p>}
+      {loadError && <p className="alert-error">{loadError}</p>}
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        <Link to="/" className="inline-block text-sm font-medium text-purple-700 hover:underline">
-          ← Back to my classes
-        </Link>
+      {tuitionClass && (
+        <>
+          <section className="card overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-violet-600 to-indigo-500" />
+            <div className="flex flex-wrap items-start justify-between gap-5 p-6">
+              <div>
+                <span className="badge badge-violet">{tuitionClass.grade}</span>
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{tuitionClass.subject}</h1>
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+                  <span className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4 text-slate-400" />
+                    {formatDay(tuitionClass.dayOfWeek)}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <ClockIcon className="h-4 w-4 text-slate-400" />
+                    {formatTimeRange(tuitionClass)}
+                  </span>
+                  <span className="flex items-center gap-2 font-semibold text-slate-900">
+                    <WalletIcon className="h-4 w-4 text-slate-400" />
+                    {formatLKR(tuitionClass.monthlyFee)}
+                    <span className="font-normal text-slate-500">/ month</span>
+                  </span>
+                </div>
+              </div>
 
-        {loading && <p className="text-gray-500">Loading...</p>}
-        {loadError && <p className="text-red-600">{loadError}</p>}
-
-        {tuitionClass && (
-          <>
-            <section className="bg-white rounded-xl shadow-sm p-5">
-              <h2 className="text-lg font-semibold text-gray-900">{tuitionClass.subject}</h2>
-              <p className="text-sm text-gray-500">{tuitionClass.grade}</p>
-              <p className="mt-2 text-sm text-gray-700">
-                {tuitionClass.dayOfWeek} · {tuitionClass.startTime.slice(0, 5)}–{tuitionClass.endTime.slice(0, 5)}
-              </p>
-              <p className="text-sm text-purple-700 font-medium">
-                LKR {tuitionClass.monthlyFee.toLocaleString()} / month
-              </p>
-              <div className="mt-4 flex gap-3">
-                <Link to={`/classes/${id}/attendance`}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+              <div className="flex gap-3">
+                <Link to={`/classes/${id}/attendance`} className="btn btn-primary">
+                  <ClipboardCheckIcon />
                   Attendance
                 </Link>
-                <Link to={`/classes/${id}/payments`}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">
+                <Link to={`/classes/${id}/payments`} className="btn btn-secondary">
+                  <WalletIcon />
                   Payments
                 </Link>
               </div>
-            </section>
+            </div>
+          </section>
 
-            <section className="bg-white rounded-xl shadow-sm p-5">
+          <section className="card">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <h2 className="flex items-center gap-2 font-bold text-slate-900">
+                <UsersIcon className="h-5 w-5 text-slate-400" />
+                Students
+                <span className="badge badge-violet">{students.length}</span>
+              </h2>
+            </div>
+
+            <div className="border-b border-slate-200 bg-slate-50/60 px-6 py-4">
               <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <label className="block flex-1">
-                  <span className="text-sm font-medium text-gray-700">Student email</span>
+                  <span className="label">Add a student by email</span>
                   <input type="email" required placeholder="student@example.com" value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+                    onChange={(e) => setEmail(e.target.value)} className="input" />
                 </label>
-                <button type="submit" disabled={adding}
-                  className="rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white hover:bg-purple-700 disabled:opacity-60">
+                <button type="submit" disabled={adding} className="btn btn-primary">
+                  <PlusIcon />
                   {adding ? "Adding..." : "Add student"}
                 </button>
               </form>
-              {addError && <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-lg p-3">{addError}</p>}
-            </section>
+              {addError && <p className="alert-error mt-3">{addError}</p>}
+            </div>
 
-            <section className="bg-white rounded-xl shadow-sm p-5">
-              <h3 className="font-semibold text-gray-800 mb-3">Students ({students.length})</h3>
+            {removeError && <p className="alert-error mx-6 mt-4">{removeError}</p>}
 
-              {removeError && <p className="mb-3 text-sm text-red-600 bg-red-50 rounded-lg p-3">{removeError}</p>}
-              {students.length === 0 && <p className="text-gray-500">No students in this class yet.</p>}
-
-              <ul className="divide-y divide-gray-100">
+            {students.length === 0 ? (
+              <EmptyState icon={<UsersIcon className="h-6 w-6" />} title="No students in this class yet"
+                hint="Add a registered student using their email address above." />
+            ) : (
+              <ul className="divide-y divide-slate-100">
                 {students.map((s) => (
-                  <li key={s.studentId} className="flex items-center justify-between gap-4 py-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{s.studentName}</p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {s.studentEmail} · joined {s.joinedDate}
-                      </p>
+                  <li key={s.studentId} className="flex items-center justify-between gap-4 px-6 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
+                        {initials(s.studentName)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-900">{s.studentName}</p>
+                        <p className="truncate text-sm text-slate-500">
+                          {s.studentEmail} · joined {s.joinedDate}
+                        </p>
+                      </div>
                     </div>
                     <button onClick={() => handleRemove(s)} disabled={removingId === s.studentId}
-                      className="text-sm font-medium text-red-600 hover:underline disabled:opacity-60">
+                      className="btn btn-danger btn-sm shrink-0">
                       {removingId === s.studentId ? "Removing..." : "Remove"}
                     </button>
                   </li>
                 ))}
               </ul>
-            </section>
-          </>
-        )}
-      </main>
-    </div>
+            )}
+          </section>
+        </>
+      )}
+    </AppLayout>
   );
 }
