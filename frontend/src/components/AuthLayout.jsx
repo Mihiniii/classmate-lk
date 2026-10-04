@@ -37,7 +37,7 @@ export default function AuthLayout({ title, subtitle, children }) {
           </ul>
         </div>
 
-        <p className="relative text-sm text-violet-200">For teachers and students in Sri Lanka</p>
+        <p className="relative text-sm text-violet-200">For teachers, students and parents in Sri Lanka</p>
       </aside>
 
       <main className="flex items-center justify-center bg-slate-50 px-4 py-10">

@@ -63,7 +63,10 @@ public class EnrollmentService {
     }
 
     public List<ClassResponse> getMyClasses(String studentEmail) {
-        User student = classAccess.findUser(studentEmail);
+        return getClassesOf(classAccess.findUser(studentEmail));
+    }
+
+    public List<ClassResponse> getClassesOf(User student) {
         return enrollmentRepository.findByStudentId(student.getId()).stream()
                 .map(Enrollment::getTuitionClass)
                 .sorted(Comparator.comparing(TuitionClass::getDayOfWeek)

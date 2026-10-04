@@ -64,7 +64,10 @@ public class AttendanceService {
     }
 
     public List<MyAttendanceResponse> getMine(String studentEmail) {
-        User student = classAccess.findUser(studentEmail);
+        return getAttendanceOf(classAccess.findUser(studentEmail));
+    }
+
+    public List<MyAttendanceResponse> getAttendanceOf(User student) {
         return attendanceRepository.findByEnrollmentStudentIdOrderByDateDesc(student.getId())
                 .stream().map(MyAttendanceResponse::from).toList();
     }

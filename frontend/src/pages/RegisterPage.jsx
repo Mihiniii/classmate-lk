@@ -6,11 +6,12 @@ import {
   PASSWORD_RULES, hasErrors, onlyErrors, validateEmail, validateName, validatePassword,
 } from "../utils/validation";
 import AuthLayout from "../components/AuthLayout";
-import { BookIcon, CheckIcon, UserIcon } from "../components/Icons";
+import { BookIcon, CheckIcon, UserIcon, UsersIcon } from "../components/Icons";
 
 const ROLES = [
   { value: "STUDENT", label: "Student", hint: "Join classes", Icon: UserIcon },
   { value: "TEACHER", label: "Teacher", hint: "Run classes", Icon: BookIcon },
+  { value: "PARENT", label: "Parent", hint: "Follow a child", Icon: UsersIcon },
 ];
 
 function validate(form) {
@@ -21,7 +22,7 @@ function validate(form) {
     confirmPassword: !form.confirmPassword
       ? "Please confirm your password"
       : form.confirmPassword !== form.password ? "Passwords do not match" : "",
-    role: ROLES.some((r) => r.value === form.role) ? "" : "Choose Student or Teacher",
+    role: ROLES.some((r) => r.value === form.role) ? "" : "Choose Student, Teacher or Parent",
   });
 }
 
@@ -65,10 +66,10 @@ export default function RegisterPage() {
 
         <fieldset>
           <legend className="label">I am a</legend>
-          <div className="mt-1.5 grid grid-cols-2 gap-3">
+          <div className="mt-1.5 grid grid-cols-3 gap-2">
             {ROLES.map(({ value, label, hint, Icon }) => (
               <label key={value}
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
+                className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center transition ${
                   form.role === value
                     ? "border-violet-600 bg-violet-50 ring-1 ring-violet-600"
                     : "border-slate-300 bg-white hover:bg-slate-50"

@@ -89,7 +89,10 @@ public class PaymentService {
     }
 
     public List<PaymentResponse> getMine(String studentEmail) {
-        User student = classAccess.findUser(studentEmail);
+        return getPaymentsOf(classAccess.findUser(studentEmail));
+    }
+
+    public List<PaymentResponse> getPaymentsOf(User student) {
         return paymentRepository.findByEnrollmentStudentIdOrderByMonthDesc(student.getId())
                 .stream().map(PaymentResponse::from).toList();
     }

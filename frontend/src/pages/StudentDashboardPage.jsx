@@ -1,236 +1,130 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import api, { errorMessage } from "../api/client";
-import { formatDay, formatLKR, formatTimeRange } from "../utils/format";
-import AppLayout, { EmptyState, StatCard } from "../components/AppLayout";
-import {
-  BookIcon, CalendarIcon, ClipboardCheckIcon, ClockIcon, UserIcon, WalletIcon,
-} from "../components/Icons";
-
-const METHODS = { CASH: "Cash", BANK_TRANSFER: "Bank transfer", ONLINE: "Online" };
-const STATUS_BADGES = { PRESENT: "badge-green", ABSENT: "badge-red", LATE: "badge-amber" };
-const STATUS_LABELS = { PRESENT: "Present", ABSENT: "Absent", LATE: "Late" };
-
-// Me masaya yyyy-mm widiyata (local time)
-function thisMonth() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-// Attendance % eka: LATE unath class ekata awa nisa present widiyata gannawa. Records nathnam null
-function attendancePercent(records) {
-  if (records.length === 0) return null;
-  const attended = records.filter((r) => r.status !== "ABSENT").length;
-  return Math.round((attended / records.length) * 100);
-}
+import api, { errorMessage, fieldErrors } from "../api/client";
+import { validateEmail } from "../utils/validation";
+import { initials } from "../utils/format";
+import AppLayout, { EmptyState } from "../components/AppLayout";
+import StudentOverview from "../components/StudentOverview";
+import { PlusIcon, UsersIcon } from "../components/Icons";
 
 export default function StudentDashboardPage() {
   const { user } = useAuth();
-  const [classes, setClasses] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selectedId, setSelectedId] = useState(null);   // history eka filter karana class eka
-  const historyRef = useRef(null);
-
-  useEffect(() => {
-    Promise.all([
-      api.get("/api/students/me/classes"),
-      api.get("/api/students/me/attendance"),
-      api.get("/api/students/me/payments"),
-    ])
-      .then(([classesRes, attendanceRes, paymentsRes]) => {
-        setClasses(classesRes.data);
-        setAttendance(attendanceRes.data);
-        setPayments(paymentsRes.data);
-      })
-      .catch((err) => setError(errorMessage(err)))
-      .finally(() => setLoading(false));
-  }, []);
-
-  function handleSelect(classId) {
-    setSelectedId(classId);
-    historyRef.current?.scrollIntoView({ behavior: "smooth" });
-  }
-
-  const month = thisMonth();
-  const paidThisMonth = new Set(payments.filter((p) => p.month === month).map((p) => p.classId));
-  const unpaidCount = classes.filter((c) => !paidThisMonth.has(c.id)).length;
-  const overallPercent = attendancePercent(attendance);
-
-  const selected = classes.find((c) => c.id === selectedId);
-  const shownAttendance = selected ? attendance.filter((a) => a.classId === selected.id) : attendance;
-  const shownPayments = selected ? payments.filter((p) => p.classId === selected.id) : payments;
 
   return (
     <AppLayout title={`Hello, ${user.name.trim().split(/\s+/)[0]}`}
       subtitle="Here's an overview of your classes, attendance and fees.">
-      {loading && <p className="text-sm text-slate-500">Loading...</p>}
-      {error && <p className="alert-error">{error}</p>}
-
-      {!loading && !error && (
-        <>
-          <section className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Classes joined" value={classes.length} tone="violet"
-              icon={<BookIcon className="h-5 w-5" />} />
-            <StatCard label="Overall attendance"
-              value={overallPercent === null ? "—" : `${overallPercent}% present`} tone="green"
-              icon={<ClipboardCheckIcon className="h-5 w-5" />} />
-            <StatCard label={`Unpaid classes · ${month}`} value={unpaidCount}
-              tone={unpaidCount > 0 ? "red" : "green"} icon={<WalletIcon className="h-5 w-5" />} />
-          </section>
-
-          <section>
-            <h2 className="mb-4 text-lg font-bold tracking-tight text-slate-900">My classes</h2>
-
-            {classes.length === 0 ? (
-              <div className="card">
-                <EmptyState icon={<BookIcon className="h-6 w-6" />} title="No classes yet"
-                  hint="Ask your teacher to add you to a class using your email address." />
-              </div>
-            ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {classes.map((c) => {
-                  const percent = attendancePercent(attendance.filter((a) => a.classId === c.id));
-                  const paid = paidThisMonth.has(c.id);
-                  return (
-                    <button key={c.id} type="button" onClick={() => handleSelect(c.id)}
-                      className={`card cursor-pointer p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
-                        selectedId === c.id ? "border-violet-500 ring-2 ring-violet-500/30" : "hover:border-violet-300"
-                      }`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-base font-bold text-slate-900">{c.subject}</h3>
-                          <span className="badge badge-violet mt-1.5">{c.grade}</span>
-                        </div>
-                        <span className={`badge shrink-0 ${paid ? "badge-green" : "badge-red"}`}>
-                          {paid ? "Paid" : "Unpaid"}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 space-y-2 text-sm text-slate-600">
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="h-4 w-4 text-slate-400" />
-                          {c.teacherName}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-4 w-4 text-slate-400" />
-                          {formatDay(c.dayOfWeek)}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="h-4 w-4 text-slate-400" />
-                          {formatTimeRange(c)}
-                        </div>
-                        <div className="flex items-center gap-2 font-semibold text-slate-900">
-                          <WalletIcon className="h-4 w-4 text-slate-400" />
-                          {formatLKR(c.monthlyFee)}
-                          <span className="font-normal text-slate-500">/ month</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 border-t border-slate-100 pt-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                          <span>Attendance</span>
-                          <span className="text-slate-900">
-                            {percent === null ? "Not marked yet" : `${percent}% present`}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent ?? 0}%` }} />
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <div ref={historyRef} className="scroll-mt-20 space-y-6">
-            {selected && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-                <span>
-                  Showing history for <span className="font-semibold">{selected.subject}</span>
-                </span>
-                <button onClick={() => setSelectedId(null)} className="btn btn-secondary btn-sm">
-                  Show all classes
-                </button>
-              </div>
-            )}
-
-            <section className="card overflow-hidden">
-              <h2 className="flex items-center gap-2 border-b border-slate-200 px-6 py-4 font-bold text-slate-900">
-                <ClipboardCheckIcon className="h-5 w-5 text-slate-400" />
-                Attendance history
-              </h2>
-              {shownAttendance.length === 0 ? (
-                <EmptyState title="No attendance records yet" />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Class</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shownAttendance.map((a) => (
-                        <tr key={`${a.classId}-${a.date}`}>
-                          <td className="whitespace-nowrap font-medium text-slate-900">{a.date}</td>
-                          <td>{a.subject}</td>
-                          <td>
-                            <span className={`badge ${STATUS_BADGES[a.status] ?? "badge-violet"}`}>
-                              {STATUS_LABELS[a.status] ?? a.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-
-            <section className="card overflow-hidden">
-              <h2 className="flex items-center gap-2 border-b border-slate-200 px-6 py-4 font-bold text-slate-900">
-                <WalletIcon className="h-5 w-5 text-slate-400" />
-                Payment history
-              </h2>
-              {shownPayments.length === 0 ? (
-                <EmptyState title="No payments yet" />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Class</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Paid on</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {shownPayments.map((p) => (
-                        <tr key={p.paymentId}>
-                          <td className="whitespace-nowrap font-medium text-slate-900">{p.month}</td>
-                          <td>{p.subject}</td>
-                          <td className="whitespace-nowrap">{formatLKR(p.amount)}</td>
-                          <td className="whitespace-nowrap">{METHODS[p.method] ?? p.method}</td>
-                          <td className="whitespace-nowrap">{p.paidAt.slice(0, 10)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          </div>
-        </>
-      )}
+      <StudentOverview basePath="/api/students/me" classesTitle="My classes"
+        emptyHint="Ask your teacher to add you to a class using your email address." />
+      <ParentsCard />
     </AppLayout>
+  );
+}
+
+// Student ta thamange attendance saha payments balanna parents la add karaganna puluwan
+function ParentsCard() {
+  const [parents, setParents] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [email, setEmail] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState("");
+  const [removingId, setRemovingId] = useState(null);
+  const [removeError, setRemoveError] = useState("");
+
+  useEffect(() => {
+    api.get("/api/students/me/parents")
+      .then((res) => setParents(res.data))
+      .catch((err) => setLoadError(errorMessage(err)));
+  }, []);
+
+  async function handleAdd(e) {
+    e.preventDefault();
+    const invalid = validateEmail(email, "Parent email")
+      || (parents.some((p) => p.email.toLowerCase() === email.trim().toLowerCase())
+        ? "This parent is already added" : "");
+    setAddError(invalid);
+    if (invalid) return;
+    setAdding(true);
+    try {
+      const { data } = await api.post("/api/students/me/parents", { parentEmail: email.trim() });
+      setParents((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setEmail("");
+    } catch (err) {
+      setAddError(fieldErrors(err).parentEmail ?? errorMessage(err));
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemove(p) {
+    if (!window.confirm(`Stop sharing your attendance and payments with ${p.name}?`)) return;
+    setRemoveError("");
+    setRemovingId(p.id);
+    try {
+      await api.delete(`/api/students/me/parents/${p.id}`);
+      setParents((prev) => prev.filter((x) => x.id !== p.id));
+    } catch (err) {
+      setRemoveError(errorMessage(err));
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  return (
+    <section className="card">
+      <div className="border-b border-slate-200 px-6 py-4">
+        <h2 className="flex items-center gap-2 font-bold text-slate-900">
+          <UsersIcon className="h-5 w-5 text-slate-400" />
+          Parents
+          <span className="badge badge-violet">{parents.length}</span>
+        </h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Parents you add here can see your classes, attendance and payments.
+        </p>
+      </div>
+
+      <div className="border-b border-slate-200 bg-slate-50/60 px-6 py-4">
+        <form onSubmit={handleAdd} noValidate className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="block flex-1">
+            <span className="label">Add a parent by email</span>
+            <input type="email" maxLength={255} placeholder="parent@example.com" value={email}
+              onChange={(e) => { setEmail(e.target.value); setAddError(""); }}
+              aria-invalid={!!addError} className="input" />
+          </label>
+          <button type="submit" disabled={adding} className="btn btn-primary">
+            <PlusIcon />
+            {adding ? "Adding..." : "Add parent"}
+          </button>
+        </form>
+        {addError && <p className="alert-error mt-3">{addError}</p>}
+      </div>
+
+      {loadError && <p className="alert-error mx-6 mt-4">{loadError}</p>}
+      {removeError && <p className="alert-error mx-6 mt-4">{removeError}</p>}
+
+      {parents.length === 0 ? (
+        <EmptyState icon={<UsersIcon className="h-6 w-6" />} title="No parents added yet"
+          hint="Your parent needs to register with a Parent account first, then add their email above." />
+      ) : (
+        <ul className="divide-y divide-slate-100">
+          {parents.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-4 px-6 py-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
+                  {initials(p.name)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-slate-900">{p.name}</p>
+                  <p className="truncate text-sm text-slate-500">{p.email}</p>
+                </div>
+              </div>
+              <button onClick={() => handleRemove(p)} disabled={removingId === p.id}
+                className="btn btn-danger btn-sm shrink-0">
+                {removingId === p.id ? "Removing..." : "Remove"}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

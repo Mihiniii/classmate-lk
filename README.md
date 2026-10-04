@@ -1,7 +1,7 @@
 # 📚 ClassMate LK
 
-A full-stack **tuition class management system** for Sri Lankan tuition teachers and students.
-Teachers manage classes, students, attendance and monthly fees; students see their classes, attendance and payment history.
+A full-stack **tuition class management system** for Sri Lankan tuition teachers, students and parents.
+Teachers manage classes, students, attendance and monthly fees; students see their classes, attendance and payment history; parents follow their child's attendance and payments.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F)
@@ -40,12 +40,18 @@ Teachers manage classes, students, attendance and monthly fees; students see the
 ### 🎓 Student
 - Dashboard with enrolled classes and overall attendance percentage
 - Attendance history and payment history
+- Add or remove parents who can follow their progress
+
+### 👪 Parent
+- Read-only dashboard with a child's classes, attendance and payment history
+- Switch between children when more than one is linked
 
 ### 🔐 Security
 - Register and log in with **JWT** authentication
-- Role-based access (**TEACHER**, **STUDENT**)
+- Role-based access (**TEACHER**, **STUDENT**, **PARENT**)
 - Passwords hashed with **BCrypt**, strong password rules on register
 - Teachers can only change their own classes
+- Parents only see students who added them
 
 ---
 
@@ -78,7 +84,7 @@ backend/src/main/java/lk/classmate/backend
 ├── controller/    REST endpoints
 ├── service/       Business rules
 ├── repository/    Spring Data JPA
-├── entity/        JPA entities (User, TuitionClass, Enrollment, Attendance, Payment)
+├── entity/        JPA entities (User, TuitionClass, Enrollment, Attendance, Payment, ParentLink)
 ├── dto/           Request / response objects
 └── exception/     Global error handling
 ```
@@ -146,6 +152,12 @@ docker compose up --build
 | GET | `/api/students/me/classes` | Student | My classes |
 | GET | `/api/students/me/attendance` | Student | My attendance |
 | GET | `/api/students/me/payments` | Student | My payments |
+| GET / POST | `/api/students/me/parents` | Student | List my parents or add one by email |
+| DELETE | `/api/students/me/parents/{parentId}` | Student | Remove a parent |
+| GET | `/api/parents/me/children` | Parent | My linked children |
+| GET | `/api/parents/me/children/{childId}/classes` | Parent (linked) | A child's classes |
+| GET | `/api/parents/me/children/{childId}/attendance` | Parent (linked) | A child's attendance |
+| GET | `/api/parents/me/children/{childId}/payments` | Parent (linked) | A child's payments |
 
 Full interactive documentation is available in **Swagger UI**.
 
@@ -158,13 +170,13 @@ cd backend
 ./mvnw test
 ```
 
-Unit tests cover business rules such as duplicate payments and invalid months, using JUnit 5 and Mockito.
+Unit tests cover business rules such as duplicate payments, invalid months and parent access to a child's data, using JUnit 5 and Mockito.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Parent role to follow a child's attendance and payments
+- [x] Parent role to follow a child's attendance and payments
 - [ ] Upload class notes (PDF)
 - [ ] Exam marks
 - [ ] QR code attendance

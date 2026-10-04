@@ -97,6 +97,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/classes/**").hasRole("TEACHER")
                         .requestMatchers(HttpMethod.DELETE, "/api/classes/**").hasRole("TEACHER")
                         .requestMatchers("/api/students/**").hasRole("STUDENT")
+                        .requestMatchers("/api/parents/**").hasRole("PARENT")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth -> oauth

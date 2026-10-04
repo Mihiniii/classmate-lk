@@ -3,16 +3,20 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import StudentDashboardPage from "./pages/StudentDashboardPage";
+import ParentDashboardPage from "./pages/ParentDashboardPage";
 import ClassDetailsPage from "./pages/ClassDetailsPage";
 import AttendancePage from "./pages/AttendancePage";
 import PaymentsPage from "./pages/PaymentsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 
-// Student ta student dashboard eka, anith ayata (teacher) class manage karana dashboard eka
+// Student ta student dashboard eka, parent ta lamainge dashboard eka,
+// anith ayata (teacher) class manage karana dashboard eka
 function Home() {
   const { user } = useAuth();
-  return user.role === "STUDENT" ? <StudentDashboardPage /> : <DashboardPage />;
+  if (user.role === "STUDENT") return <StudentDashboardPage />;
+  if (user.role === "PARENT") return <ParentDashboardPage />;
+  return <DashboardPage />;
 }
 
 export default function App() {
