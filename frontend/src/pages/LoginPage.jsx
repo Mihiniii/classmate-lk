@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { errorMessage, fieldErrors } from "../api/client";
 import { hasErrors, onlyErrors, validateEmail } from "../utils/validation";
@@ -8,7 +8,8 @@ import AuthLayout from "../components/AuthLayout";
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const { state } = useLocation();   // register page eken awoth { registered, email } enawa
+  const [email, setEmail] = useState(state?.email ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [fields, setFields] = useState({});
@@ -39,6 +40,9 @@ export default function LoginPage() {
   return (
     <AuthLayout title="Welcome back" subtitle="Log in to your account to continue">
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        {state?.registered && !error && (
+          <p className="alert-success">Account created. Please log in to continue.</p>
+        )}
         {error && <p className="alert-error">{error}</p>}
 
         <label className="block">

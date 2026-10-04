@@ -47,8 +47,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(form.name.trim(), form.email.trim(), form.password, form.role);
-      navigate("/");
+      const email = form.email.trim();
+      await register(form.name.trim(), email, form.password, form.role);
+      navigate("/login", { replace: true, state: { registered: true, email } });
     } catch (err) {
       setError(errorMessage(err));
       setFields(fieldErrors(err));

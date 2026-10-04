@@ -18,8 +18,8 @@ export function AuthProvider({ children }) {
   }
 
   async function register(name, email, password, role) {
+    // Auto login wenne na - register unata passe login page ekata yanawa
     await api.post("/api/auth/register", { name, email, password, role });
-    return login(email, password);   // register unama auto login
   }
 
   function logout() {
