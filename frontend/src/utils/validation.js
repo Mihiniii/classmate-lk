@@ -54,6 +54,19 @@ export function validateAmount(value, label) {
   return "";
 }
 
+// Class notes: PDF witharai, 10 MB wenakan (backend eke NoteService ekath ekka galapenna one)
+export const MAX_NOTE_SIZE = 10 * 1024 * 1024;
+
+export function validatePdf(file) {
+  if (!file) return "Choose a PDF file to upload";
+  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+    return "Only PDF files can be uploaded";
+  }
+  if (file.size === 0) return "This file is empty";
+  if (file.size > MAX_NOTE_SIZE) return "File is too large (max 10 MB)";
+  return "";
+}
+
 // { name: "", email: "Email is required" } -> { email: "Email is required" }
 export function onlyErrors(errors) {
   return Object.fromEntries(Object.entries(errors).filter(([, message]) => message));

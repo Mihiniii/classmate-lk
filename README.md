@@ -36,10 +36,12 @@ Teachers manage classes, students, attendance and monthly fees; students see the
 - Add and remove students from a class
 - Mark attendance by date (Present / Absent / Late) with a daily summary
 - Record monthly fee payments and see paid / unpaid students and totals
+- Upload class notes as PDF files (up to 10 MB) for students to download
 
 ### 🎓 Student
 - Dashboard with enrolled classes and overall attendance percentage
 - Attendance history and payment history
+- Download the PDF notes of enrolled classes
 - Add or remove parents who can follow their progress
 
 ### 👪 Parent
@@ -52,6 +54,7 @@ Teachers manage classes, students, attendance and monthly fees; students see the
 - Passwords hashed with **BCrypt**, strong password rules on register
 - Teachers can only change their own classes
 - Parents only see students who added them
+- Class notes can only be downloaded by the class teacher and enrolled students
 
 ---
 
@@ -84,7 +87,7 @@ backend/src/main/java/lk/classmate/backend
 ├── controller/    REST endpoints
 ├── service/       Business rules
 ├── repository/    Spring Data JPA
-├── entity/        JPA entities (User, TuitionClass, Enrollment, Attendance, Payment, ParentLink)
+├── entity/        JPA entities (User, TuitionClass, Enrollment, Attendance, Payment, ParentLink, ClassNote)
 ├── dto/           Request / response objects
 └── exception/     Global error handling
 ```
@@ -149,9 +152,13 @@ docker compose up --build
 | GET / POST | `/api/classes/{id}/attendance` | Teacher (owner) | View or mark attendance |
 | GET / POST | `/api/classes/{id}/payments` | Teacher (owner) | Monthly summary or record a payment |
 | DELETE | `/api/classes/{id}/payments/{paymentId}` | Teacher (owner) | Undo a payment |
+| GET / POST | `/api/classes/{id}/notes` | Teacher (owner), enrolled student / Teacher (owner) | List notes or upload a PDF |
+| GET | `/api/classes/{id}/notes/{noteId}/file` | Teacher (owner), enrolled student | Download a note |
+| DELETE | `/api/classes/{id}/notes/{noteId}` | Teacher (owner) | Delete a note |
 | GET | `/api/students/me/classes` | Student | My classes |
 | GET | `/api/students/me/attendance` | Student | My attendance |
 | GET | `/api/students/me/payments` | Student | My payments |
+| GET | `/api/students/me/notes` | Student | Notes of my classes |
 | GET / POST | `/api/students/me/parents` | Student | List my parents or add one by email |
 | DELETE | `/api/students/me/parents/{parentId}` | Student | Remove a parent |
 | GET | `/api/parents/me/children` | Parent | My linked children |
@@ -170,14 +177,14 @@ cd backend
 ./mvnw test
 ```
 
-Unit tests cover business rules such as duplicate payments, invalid months and parent access to a child's data, using JUnit 5 and Mockito.
+Unit tests cover business rules such as duplicate payments, invalid months, parent access to a child's data and PDF upload checks, using JUnit 5 and Mockito.
 
 ---
 
 ## 🗺️ Roadmap
 
 - [x] Parent role to follow a child's attendance and payments
-- [ ] Upload class notes (PDF)
+- [x] Upload class notes (PDF)
 - [ ] Exam marks
 - [ ] QR code attendance
 - [ ] Online payments with PayHere

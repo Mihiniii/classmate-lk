@@ -4,6 +4,7 @@ import api, { errorMessage, fieldErrors } from "../api/client";
 import { validateEmail } from "../utils/validation";
 import { formatDay,formatLKR, formatTimeRange, initials } from "../utils/format";
 import AppLayout, { EmptyState } from "../components/AppLayout";
+import ClassNotes from "../components/ClassNotes";
 import {
   CalendarIcon, ClipboardCheckIcon, ClockIcon, PlusIcon, UsersIcon, WalletIcon,
 } from "../components/Icons";
@@ -163,6 +164,8 @@ export default function ClassDetailsPage() {
               </ul>
             )}
           </section>
+
+          <ClassNotes classId={id} />
         </>
       )}
     </AppLayout>

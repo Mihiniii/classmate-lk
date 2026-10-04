@@ -13,6 +13,12 @@ export function formatLKR(amount) {
   return `LKR ${amount.toLocaleString()}`;
 }
 
+// 2411724 -> "2.3 MB", 51200 -> "50 KB"
+export function formatFileSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 // "Kasun Perera" -> "KP"
 export function initials(name) {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join("");

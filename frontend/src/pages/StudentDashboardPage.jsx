@@ -12,8 +12,8 @@ export default function StudentDashboardPage() {
 
   return (
     <AppLayout title={`Hello, ${user.name.trim().split(/\s+/)[0]}`}
-      subtitle="Here's an overview of your classes, attendance and fees.">
-      <StudentOverview basePath="/api/students/me" classesTitle="My classes"
+      subtitle="Here's an overview of your classes, notes, attendance and fees.">
+      <StudentOverview basePath="/api/students/me" classesTitle="My classes" showNotes
         emptyHint="Ask your teacher to add you to a class using your email address." />
       <ParentsCard />
     </AppLayout>

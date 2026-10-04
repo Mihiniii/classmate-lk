@@ -36,4 +36,17 @@ export function fieldErrors(err) {
   return err.response?.data?.fieldErrors ?? {};
 }
 
+// Token eka one nisa file eka axios walin aran browser eken save karanawa (link ekakin ba)
+export async function downloadFile(url, fileName) {
+  const { data } = await api.get(url, { responseType: "blob" });
+  const objectUrl = URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export default api;

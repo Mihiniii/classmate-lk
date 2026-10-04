@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import api, { errorMessage } from "../api/client";
-import { formatDay, formatLKR, formatTimeRange } from "../utils/format";
+import api, { downloadFile, errorMessage } from "../api/client";
+import { formatDay, formatFileSize, formatLKR, formatTimeRange } from "../utils/format";
 import { EmptyState, StatCard } from "./AppLayout";
 import {
-  BookIcon, CalendarIcon, ClipboardCheckIcon, ClockIcon, UserIcon, WalletIcon,
+  BookIcon, CalendarIcon, ClipboardCheckIcon, ClockIcon, DownloadIcon, FileIcon, UserIcon, WalletIcon,
 } from "./Icons";
 
 const METHODS = { CASH: "Cash", BANK_TRANSFER: "Bank transfer", ONLINE: "Online" };
@@ -26,10 +26,14 @@ function attendancePercent(records) {
 // Ek student kenekge classes, attendance saha payments pennana kotasa.
 // Student dashboard eke (basePath = /api/students/me) saha parent dashboard eke
 // (basePath = /api/parents/me/children/{id}) dekema use karanawa.
-export default function StudentOverview({ basePath, classesTitle, emptyHint }) {
+// showNotes: class notes (PDF) pennanne student ta witharai, parent ta nemei.
+export default function StudentOverview({ basePath, classesTitle, emptyHint, showNotes = false }) {
   const [classes, setClasses] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [downloadError, setDownloadError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);   // history eka filter karana class eka
@@ -40,19 +44,33 @@ export default function StudentOverview({ basePath, classesTitle, emptyHint }) {
       api.get(`${basePath}/classes`),
       api.get(`${basePath}/attendance`),
       api.get(`${basePath}/payments`),
+      showNotes ? api.get(`${basePath}/notes`) : { data: [] },
     ])
-      .then(([classesRes, attendanceRes, paymentsRes]) => {
+      .then(([classesRes, attendanceRes, paymentsRes, notesRes]) => {
         setClasses(classesRes.data);
         setAttendance(attendanceRes.data);
         setPayments(paymentsRes.data);
+        setNotes(notesRes.data);
       })
       .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false));
-  }, [basePath]);
+  }, [basePath, showNotes]);
 
   function handleSelect(classId) {
     setSelectedId(classId);
     historyRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  async function handleDownload(n) {
+    setDownloadError("");
+    setDownloadingId(n.noteId);
+    try {
+      await downloadFile(`/api/classes/${n.classId}/notes/${n.noteId}/file`, n.fileName);
+    } catch {
+      setDownloadError(`Could not download "${n.title}". Please try again.`);
+    } finally {
+      setDownloadingId(null);
+    }
   }
 
   if (loading) return <p className="text-sm text-slate-500">Loading...</p>;
@@ -66,6 +84,7 @@ export default function StudentOverview({ basePath, classesTitle, emptyHint }) {
   const selected = classes.find((c) => c.id === selectedId);
   const shownAttendance = selected ? attendance.filter((a) => a.classId === selected.id) : attendance;
   const shownPayments = selected ? payments.filter((p) => p.classId === selected.id) : payments;
+  const shownNotes = selected ? notes.filter((n) => n.classId === selected.id) : notes;
 
   return (
     <>
@@ -154,6 +173,42 @@ export default function StudentOverview({ basePath, classesTitle, emptyHint }) {
               Show all classes
             </button>
           </div>
+        )}
+
+        {showNotes && (
+          <section className="card overflow-hidden">
+            <h2 className="flex items-center gap-2 border-b border-slate-200 px-6 py-4 font-bold text-slate-900">
+              <FileIcon className="h-5 w-5 text-slate-400" />
+              Class notes
+            </h2>
+            {downloadError && <p className="alert-error mx-6 mt-4">{downloadError}</p>}
+            {shownNotes.length === 0 ? (
+              <EmptyState title="No notes yet" hint="PDF notes your teachers upload will appear here." />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {shownNotes.map((n) => (
+                  <li key={n.noteId} className="flex items-center justify-between gap-4 px-6 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                        <FileIcon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-900">{n.title}</p>
+                        <p className="truncate text-sm text-slate-500">
+                          {n.subject} · {formatFileSize(n.fileSize)} · uploaded {n.uploadedAt.slice(0, 10)}
+                        </p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleDownload(n)} disabled={downloadingId === n.noteId}
+                      className="btn btn-secondary btn-sm shrink-0">
+                      <DownloadIcon />
+                      {downloadingId === n.noteId ? "Downloading..." : "Download"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )}
 
         <section className="card overflow-hidden">
