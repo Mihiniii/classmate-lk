@@ -7,6 +7,11 @@ import { ArrowLeftIcon, LogoIcon, LogOutIcon } from "./Icons";
 export default function AppLayout({ title, subtitle, backTo, backLabel, actions, children }) {
   const { user, logout } = useAuth();
 
+  function handleLogout() {
+    if (!window.confirm("Are you sure you want to log out?")) return;
+    logout();
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -28,7 +33,7 @@ export default function AppLayout({ title, subtitle, backTo, backLabel, actions,
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-sm font-bold text-violet-700">
               {initials(user.name)}
             </span>
-            <button onClick={logout} className="btn btn-ghost btn-sm" title="Log out">
+            <button onClick={handleLogout} className="btn btn-ghost btn-sm" title="Log out">
               <LogOutIcon />
               <span className="hidden sm:inline">Log out</span>
             </button>
